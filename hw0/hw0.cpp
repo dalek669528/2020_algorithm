@@ -19,15 +19,15 @@ public:
         cons = std = mean = 0.0;
     }
     void display(){
-        // cout<<"Cell "<<id<<"\t<"<<x<<",\t"<<y<<">\t"<<setprecision(15)<<cons<<endl;
-        cout<<"Cell "<<setw(5)<<id<<setw(5)<<(sum/count)<<"\t"<<setprecision(15)<<cons<<endl;
+        // cerr<<"Cell "<<id<<"\t<"<<x<<",\t"<<y<<">\t"<<setprecision(15)<<cons<<endl;
+        cerr<<"Cell "<<setw(5)<<id<<setw(5)<<(sum/count)<<"\t"<<setprecision(15)<<cons<<endl;
     }
     int distance(const Cell& ob2){
         int dis = 0;
         for(int i=0;i<patterns.size();i++){
-            dis += (this->patterns[i] ^ ob2.patterns[i]);
+            dis += (int)(this->patterns[i] ^ ob2.patterns[i]);
         }
-        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*0.2;
+        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*0.01;
         return dis;
     }
     bool operator<(const Cell& ob2){
@@ -57,9 +57,8 @@ int main(int argc, char *argv[]){
 
     file.open ("./testcase/" + filename + ".chn", ifstream::in);
     int cell_n = count(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), '\n');
-    cout<<cell_n<<" cells. ";
-    file.clear();
     file.seekg(0);
+    file.clear();
     Cell c[cell_n];
     // while(!file.eof()){
     for(int i=0;i<cell_n;i++){
@@ -82,6 +81,7 @@ int main(int argc, char *argv[]){
         // c.display();
     }
     file.close();
+    cerr<<"Readed "<<cell_n<<" cells."<<endl;
     double all_cons[cell_n] = {c[0].cons};
     int scan_chain_L = 0;
     for(int i=1;i<cell_n;i++){
@@ -90,61 +90,72 @@ int main(int argc, char *argv[]){
     }
 
     file.open ("./testcase/" + filename + ".src", ifstream::in);
-    int pattern_n = count(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), '\n');
-    cout<<pattern_n<<" patterns."<<endl<<endl;
-    file.clear();
-    file.seekg(0);
-
+    int pattern_n = 0;
     bool d_p[cell_n*2] = {0};
     bool last_state = 0;
     double max_PP = 0;
 
-    for(int i=0;i<pattern_n;i++){
-        // if(i%(pattern_n/5) == 0)
-        //     cerr<<'|';
-        // else if(i%(pattern_n/50) == 0)
-        //     cerr<<'-';
-
+    cerr<<"|";
+    while(!file.eof()){
         string str;
         getline(file,str);
         if(str == "")
             break;
-        for(int j=0;j<cell_n;j++){
+        int k = 0;
+        for(int j=0;j<str.length();j++){
             bool curr_state;
-            if (str[j] == '0'){
-                c[j].patterns.push_back(0);
+            if (str[j] == '\\'){
+                getline(file,str);
+                if(str == "")
+                    break;
+                else{
+                    j = -1;
+                    continue;
+                }
+            }
+            else if (str[j] == '0'){
+                c[k].patterns.push_back(0);
                 curr_state = 0;
+                k++;
             }
             else if (str[j] == '1'){
-                c[j].patterns.push_back(1);
-                c[j].sum += i;
-                c[j].count += 1;
+                c[k].patterns.push_back(1);
+                c[k].sum += pattern_n;
+                c[k].count += 1;
                 curr_state = 1;
+                k++;
+            }
+            else if (str[j] == '\r'){
+                break;
             }
             else{
-                continue;
+                cerr<<"Error src input. line:"<<pattern_n<<" j:"<<j<<" -"<<str[j]<<"-"<<endl;
+                break;
             }
-            d_p[j + cell_n - 1] = curr_state ^ last_state;
+            d_p[k + cell_n - 1] = curr_state ^ last_state;
             last_state = curr_state;
-            // cout<<d_p[j + cell_n - 1];
+            // cerr<<d_p[j + cell_n - 1];
         }
-        // cout<<endl;
-        // cout<<"Pattern "<<i<<" finish.\n";
+        // cerr<<endl;
+        // cerr<<"Pattern "<<i<<" finish.\n";
 
         for(int j=0;j<cell_n;j++){
             double pp = 0;
             for(int k=0;k<cell_n;k++){
-                // cout<<all_cons[k]<<" * "<<d_p[j + cell_n - k - 1]<<endl;
+                // cerr<<all_cons[k]<<" * "<<d_p[j + cell_n - k - 1]<<endl;
                 pp = pp + all_cons[k] * d_p[j + cell_n - k - 1];
             }
-            // cout<<" = "<<pp<<endl<<endl;
+            // cerr<<" = "<<pp<<endl<<endl;
             d_p[j] = d_p[j + cell_n];
             if(max_PP < pp){
                 max_PP = pp;
             }
         }
+        pattern_n++;
+        // cerr<<"Pattern "<<pattern_n<<" finish.\n";
+        cerr<<"-";
     }
-    // cerr<<"|"<<endl;
+    cerr<<"|"<<endl;
     file.close();
 
     cout<<"Max Peak Power: "<<max_PP<<endl;
@@ -156,12 +167,14 @@ int main(int argc, char *argv[]){
     //     }
     //     // cout<<endl;
     // // }
-    cout<<"------------------------------------------------------------------------\n";
-    sort(c+1, c+cell_n-1);
+    cerr<<"------------------------------------------------------------------------\n";
+    // sort(c+1, c+cell_n-1);
     for(int i=0;i<cell_n-2;i++){
+        // cerr<<i<<" - ";
         int index = i+1;
         int min_dis = c[i].distance(c[i+1]);
         for(int j=i+2;j<cell_n-1;j++){
+            // cerr<<j<<" ";
             int dis = c[i].distance(c[j]);
             if(dis<min_dis){
                 min_dis = dis;
@@ -169,17 +182,17 @@ int main(int argc, char *argv[]){
             }
         }
         swap(c[i+1], c[index]);
-        // cout<<c[i].patterns[j];
+        // cerr<<"--\n";
     }
 
 
-    // // for(int j=0;j<pattern_n && j<50;j++){
-    //     for(int i=0;i<cell_n && i<100;i++){
-    //         c[i].display();
-    //         // cout<<c[i].patterns[j];
-    //     }
-    //     // cout<<endl;
-    // // }
+    // // // for(int j=0;j<pattern_n && j<50;j++){
+    // //     for(int i=0;i<cell_n && i<100;i++){
+    // //         c[i].display();
+    // //         // cout<<c[i].patterns[j];
+    // //     }
+    // //     // cout<<endl;
+    // // // }
 
 
 
@@ -191,12 +204,14 @@ int main(int argc, char *argv[]){
     last_state = 0;
     max_PP = 0;
 
+    cerr<<"|";
     for(int i=0;i<pattern_n;i++){
         // if(i%(pattern_n/5) == 0)
         //     cerr<<'|';
         // else if(i%(pattern_n/50) == 0)
         //     cerr<<'-';
 
+        cerr<<".";
         for(int j=0;j<cell_n;j++){
             d_p[j + cell_n - 1] = c[j].patterns[i] ^ last_state;
             last_state = c[j].patterns[i];
@@ -218,7 +233,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    // cerr<<"|"<<endl;
+    cerr<<"|"<<endl;
     cout<<"Max Peak Power: "<<max_PP<<endl;
     cout<<"Scan-chain Length: "<<scan_chain_L<<endl;
 
