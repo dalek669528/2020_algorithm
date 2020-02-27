@@ -9,6 +9,9 @@
 #include <cmath>
 #include <vector> 
 using namespace std;
+
+float W_pp, W_scl, W_t;
+
 class Cell{
 public:
     int id, x, y, sum, count;
@@ -27,7 +30,7 @@ public:
         for(int i=0;i<patterns.size();i++){
             dis += (int)(this->patterns[i] ^ ob2.patterns[i]);
         }
-        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*0.01;
+        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*W_scl*0.1;
         return dis;
     }
     bool operator<(const Cell& ob2){
@@ -43,19 +46,19 @@ public:
 };
 
 int main(int argc, char *argv[]){
-    if(argc!=2){
+    if(argc!=7){
         printf("Error input format: ./hw0 XXX\n");
         return 0;
     }
-    ifstream file;
-    string filename(argv[1]);
-
-    file.open ("./testcase/" + filename + ".cfg", ifstream::in);
-    int W_pp, W_scl, W_t;
+    fstream file;
+    string path("./");
+    string filename(argv[3]);
+    file.open (path + filename , ifstream::in);
     file>>W_pp>>W_scl>>W_t;
     file.close();
 
-    file.open ("./testcase/" + filename + ".chn", ifstream::in);
+    filename = argv[1];
+    file.open (path + filename, ifstream::in);
     int cell_n = count(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), '\n');
     file.seekg(0);
     file.clear();
@@ -81,7 +84,7 @@ int main(int argc, char *argv[]){
         // c.display();
     }
     file.close();
-    cerr<<"Readed "<<cell_n<<" cells."<<endl;
+    // cerr<<"Readed "<<cell_n<<" cells."<<endl;
     double all_cons[cell_n] = {c[0].cons};
     int scan_chain_L = 0;
     for(int i=1;i<cell_n;i++){
@@ -89,13 +92,14 @@ int main(int argc, char *argv[]){
         scan_chain_L = scan_chain_L + abs(c[i].x - c[i-1].x) + abs(c[i].y - c[i-1].y);
     }
 
-    file.open ("./testcase/" + filename + ".src", ifstream::in);
+    filename = argv[2];
+    file.open (path + filename, ifstream::in);
     int pattern_n = 0;
     bool d_p[cell_n*2] = {0};
     bool last_state = 0;
     double max_PP = 0;
 
-    cerr<<"|";
+    // cerr<<"|";
     while(!file.eof()){
         string str;
         getline(file,str);
@@ -134,7 +138,8 @@ int main(int argc, char *argv[]){
             }
             d_p[k + cell_n - 1] = curr_state ^ last_state;
             last_state = curr_state;
-            // cerr<<d_p[j + cell_n - 1];
+            // cerr<<curr_state;
+            // cerr<<d_p[k + cell_n - 1];
         }
         // cerr<<endl;
         // cerr<<"Pattern "<<i<<" finish.\n";
@@ -153,21 +158,17 @@ int main(int argc, char *argv[]){
         }
         pattern_n++;
         // cerr<<"Pattern "<<pattern_n<<" finish.\n";
-        cerr<<"-";
+        // cerr<<"-";
     }
-    cerr<<"|"<<endl;
+    // cerr<<"|"<<endl;
     file.close();
 
-    cout<<"Max Peak Power: "<<max_PP<<endl;
     cout<<"Scan-chain Length: "<<scan_chain_L<<endl;
-    // // for(int j=0;j<pattern_n && j<50;j++){
-    //     for(int i=0;i<cell_n && i<100;i++){
-    //         c[i].display();
-    //         // cout<<c[i].patterns[j];
-    //     }
-    //     // cout<<endl;
-    // // }
-    cerr<<"------------------------------------------------------------------------\n";
+    cout<<"Max Peak Power: "<<max_PP<<endl;
+    double ori_pp = max_PP; 
+    int ori_SCL = scan_chain_L;
+
+    cerr<<"\n";
     // sort(c+1, c+cell_n-1);
     for(int i=0;i<cell_n-2;i++){
         // cerr<<i<<" - ";
@@ -181,45 +182,33 @@ int main(int argc, char *argv[]){
                 index = j;
             }
         }
-        swap(c[i+1], c[index]);
-        // cerr<<"--\n";
+        if(i+1 != index){
+            // cerr<<"swap -- "<<i+1<<" / "<<index<<"\t\t"<<c[i+1].id<<" / "<<c[index].id<<endl;
+            swap(c[i+1], c[index]);
+        }
     }
 
-
-    // // // for(int j=0;j<pattern_n && j<50;j++){
-    // //     for(int i=0;i<cell_n && i<100;i++){
-    // //         c[i].display();
-    // //         // cout<<c[i].patterns[j];
-    // //     }
-    // //     // cout<<endl;
-    // // // }
-
-
-
+    scan_chain_L = 0;
+    last_state = 0;
+    max_PP = 0;
+    for(int i=0;i<cell_n;i++){
+        d_p[i] = 0;
+    }
     for(int i=1;i<cell_n;i++){
         all_cons[i] = c[i].cons;
         scan_chain_L = scan_chain_L + abs(c[i].x - c[i-1].x) + abs(c[i].y - c[i-1].y);
     }
-
-    last_state = 0;
-    max_PP = 0;
-
-    cerr<<"|";
+    // cerr<<"|";
     for(int i=0;i<pattern_n;i++){
-        // if(i%(pattern_n/5) == 0)
-        //     cerr<<'|';
-        // else if(i%(pattern_n/50) == 0)
-        //     cerr<<'-';
-
-        cerr<<".";
+        // cerr<<"-";
         for(int j=0;j<cell_n;j++){
             d_p[j + cell_n - 1] = c[j].patterns[i] ^ last_state;
             last_state = c[j].patterns[i];
-            // cout<<d_p[j + cell_n - 1];
+            // cout<<c[j].patterns[i]<<" ^ "<<last_state<<" = ";
+            // cout<<d_p[j + cell_n - 1]<<endl;
         }
         // cout<<endl;
         // cout<<"Pattern "<<i<<" finish.\n";
-
         for(int j=0;j<cell_n;j++){
             double pp = 0;
             for(int k=0;k<cell_n;k++){
@@ -233,24 +222,39 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    cerr<<"|"<<endl;
-    cout<<"Max Peak Power: "<<max_PP<<endl;
+    // cerr<<"|"<<endl;
     cout<<"Scan-chain Length: "<<scan_chain_L<<endl;
+    cout<<"Max Peak Power: "<<max_PP<<endl;
 
 
 
+    filename = argv[4];
+    file.open (path + filename, ofstream::out);
+    for(int i=0;i<cell_n;i++){
+        file<<"SCANCELL"<<c[i].id<<"\t<"<<c[i].x<<",\t"<<c[i].y<<">\t"<<setprecision(15)<<c[i].cons<<endl;
+    }
+    file.close();
 
-
-
-
-
-
-
-
-
-
-
-
+    filename = argv[5];
+    file.open (path + filename, ofstream::out);
+    for(int j=0;j<pattern_n;j++){
+        for(int i=0;i<cell_n;i++){
+            file<<c[i].patterns[j];
+        }
+        file<<endl;
+    }
+    file.close();
+    
+    filename = argv[6];
+    file.open (path + filename, ofstream::out);
+    file<<"Original:\n";
+    file<<"Scan-Chain Length = "<<ori_SCL<<endl;
+    file<<"Max Peak Power = "<<ori_pp<<endl<<endl;
+    file<<"Reordered:\n";
+    file<<"Scan-Chain Length = "<<scan_chain_L<<endl;
+    file<<"Max Peak Power = "<<max_PP;
+    file.close();
+    
     cout<<endl<<"The program took "<<(((float)clock())/CLOCKS_PER_SEC)<<" seconds."<<endl;
     return 0;
 

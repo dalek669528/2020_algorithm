@@ -9,6 +9,9 @@
 #include <cmath>
 #include <vector> 
 using namespace std;
+
+int W_pp, W_scl, W_t;
+
 class Cell{
 public:
     int id, x, y, sum, count;
@@ -27,7 +30,7 @@ public:
         for(int i=0;i<patterns.size();i++){
             dis += (int)(this->patterns[i] ^ ob2.patterns[i]);
         }
-        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*0.2;
+        dis += (abs(this->x - ob2.x) + abs(this->y - ob2.y))*0.05;
         return dis;
     }
     bool operator<(const Cell& ob2){
@@ -43,19 +46,18 @@ public:
 };
 
 int main(int argc, char *argv[]){
-    if(argc!=2){
+    if(argc!=4){
         printf("Error input format: ./hw0 XXX\n");
         return 0;
     }
     ifstream file;
-    string filename(argv[1]);
-
-    file.open ("./testcase/" + filename + ".cfg", ifstream::in);
-    int W_pp, W_scl, W_t;
+    string filename(argv[3]);
+    file.open ("./testcase/" + filename , ifstream::in);
     file>>W_pp>>W_scl>>W_t;
     file.close();
 
-    file.open ("./testcase/" + filename + ".chn", ifstream::in);
+    filename = argv[1];
+    file.open ("./testcase/" + filename, ifstream::in);
     int cell_n = count(istreambuf_iterator<char>(file), istreambuf_iterator<char>(), '\n');
     file.seekg(0);
     file.clear();
@@ -89,7 +91,8 @@ int main(int argc, char *argv[]){
         scan_chain_L = scan_chain_L + abs(c[i].x - c[i-1].x) + abs(c[i].y - c[i-1].y);
     }
 
-    file.open ("./testcase/" + filename + ".src", ifstream::in);
+    filename = argv[2];
+    file.open ("./testcase/" + filename, ifstream::in);
     int pattern_n = 0;
     bool d_p[cell_n*2] = {0};
     bool last_state = 0;
@@ -168,7 +171,7 @@ int main(int argc, char *argv[]){
     //     // cout<<endl;
     // // }
     cerr<<"------------------------------------------------------------------------\n";
-    sort(c+1, c+cell_n-1);
+    // sort(c+1, c+cell_n-1);
     for(int i=0;i<cell_n-2;i++){
         // cerr<<i<<" - ";
         int index = i+1;
@@ -206,10 +209,6 @@ int main(int argc, char *argv[]){
 
     cerr<<"|";
     for(int i=0;i<pattern_n;i++){
-        // if(i%(pattern_n/5) == 0)
-        //     cerr<<'|';
-        // else if(i%(pattern_n/50) == 0)
-        //     cerr<<'-';
 
         cerr<<".";
         for(int j=0;j<cell_n;j++){
