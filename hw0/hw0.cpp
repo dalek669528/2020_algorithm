@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
         return 0;
     }
     fstream file;
-    string path("./");
+    string path("");
     string filename(argv[3]);
     file.open (path + filename , ifstream::in);
     file>>W_pp>>W_scl>>W_t;
