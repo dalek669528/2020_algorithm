@@ -7,7 +7,8 @@
 #include <algorithm>
 #include <ctime>
 #include <cmath>
-#include <vector> 
+#include <vector>
+#include <omp.h>
 using namespace std;
 
 float W_pp, W_scl, W_t;
@@ -106,6 +107,7 @@ int main(int argc, char *argv[]){
         if(str == "")
             break;
         int k = 0;
+        #pragma omp parallel for
         for(int j=0;j<str.length();j++){
             bool curr_state;
             if (str[j] == '\\'){
@@ -199,6 +201,7 @@ int main(int argc, char *argv[]){
         scan_chain_L = scan_chain_L + abs(c[i].x - c[i-1].x) + abs(c[i].y - c[i-1].y);
     }
     // cerr<<"|";
+    #pragma omp parallel for
     for(int i=0;i<pattern_n;i++){
         // cerr<<"-";
         for(int j=0;j<cell_n;j++){
